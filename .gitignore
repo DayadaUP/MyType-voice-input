@@ -1,0 +1,8 @@
+.DS_Store
+apps/mac-ime/.build/
+apps/mac-ime/.venv/
+apps/mac-ime/.models/
+apps/mac-ime/dist/
+apps/mac-ime/.swiftpm/xcode/package.xcworkspace/xcuserdata/
+apps/mac-ime/.swiftpm/xcode/xcuserdata/
+*.xcappdata/
