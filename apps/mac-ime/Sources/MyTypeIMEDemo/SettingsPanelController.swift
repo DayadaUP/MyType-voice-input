@@ -1,5 +1,6 @@
 import AppKit
 import QuartzCore
+import Common
 import Settings
 import ASRAdapter
 import TextProcessor
@@ -156,6 +157,7 @@ private final class APISettingsModalController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
+        MyTypeAppearance.applyFixedLightAppearance(to: panel)
         panel.title = "API设置"
         panel.isFloatingPanel = true
         panel.level = .modalPanel
@@ -270,7 +272,7 @@ private final class APISettingsModalController: NSObject, NSWindowDelegate {
         rootStack.spacing = 10
         rootStack.translatesAutoresizingMaskIntoConstraints = false
 
-        if let logoURL = Bundle.module.url(forResource: "AppLogo", withExtension: "png"),
+        if let logoURL = AppResourceLocator.url(forResource: "AppLogo", withExtension: "png"),
            let logoImage = NSImage(contentsOf: logoURL) {
             let logoWrap = NSView(frame: .zero)
             logoWrap.translatesAutoresizingMaskIntoConstraints = false
@@ -1231,6 +1233,7 @@ final class SettingsPanelController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
+        MyTypeAppearance.applyFixedLightAppearance(to: panel)
         panel.title = "MyType 设置"
         panel.isFloatingPanel = false
         panel.level = .normal
@@ -1678,7 +1681,7 @@ final class SettingsPanelController: NSWindowController, NSWindowDelegate {
         brandTitle.textColor = .labelColor
 
         var brandMediaViews: [NSView] = []
-        if let logoURL = Bundle.module.url(forResource: "AppLogo", withExtension: "png"),
+        if let logoURL = AppResourceLocator.url(forResource: "AppLogo", withExtension: "png"),
            let logoImage = NSImage(contentsOf: logoURL) {
             let logoWrap = NSView(frame: .zero)
             logoWrap.translatesAutoresizingMaskIntoConstraints = false

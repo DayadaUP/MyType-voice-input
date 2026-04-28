@@ -48,3 +48,18 @@ bash Scripts/package_demo_app.sh
 ```
 
 Artifacts are written to `dist/`.
+
+If a `Developer ID Application` certificate is installed in Keychain Access, the packaging script will use it automatically. To notarize the release, first store a notary profile:
+
+```bash
+xcrun notarytool store-credentials MyTypeNotary --apple-id <apple-id> --team-id <team-id>
+```
+
+The command prompts for an app-specific password for the Apple ID account.
+
+Then build, sign, and notarize the DMG:
+
+```bash
+cd /Users/daya/Code/CodeX/MyType/apps/mac-ime
+bash Scripts/package_demo_app.sh --notarize --notary-profile MyTypeNotary
+```

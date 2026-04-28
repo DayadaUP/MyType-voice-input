@@ -318,7 +318,7 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         configureStatusItem()
         configureGlobalShortcuts()
 
-        if let audioURL = Bundle.module.url(forResource: "RecordingEndCue", withExtension: "aac") {
+        if let audioURL = AppResourceLocator.url(forResource: "RecordingEndCue", withExtension: "aac") {
             do {
                 endRecordingPlayer = try AVAudioPlayer(contentsOf: audioURL)
                 endRecordingPlayer?.volume = 0.5
@@ -328,7 +328,7 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        if let logoURL = Bundle.module.url(forResource: "AppLogo", withExtension: "png"),
+        if let logoURL = AppResourceLocator.url(forResource: "AppLogo", withExtension: "png"),
            let logoImage = NSImage(contentsOf: logoURL) {
             NSApp.applicationIconImage = createStandardDockIcon(from: logoImage)
         }
@@ -380,7 +380,6 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         printPipelinePerformanceReportIfAny()
         observeLocalASRAssetState()
         requestInitialPermissionsIfNeeded()
-        scheduleInitialLocalASRDownloadPromptIfNeeded()
         startStabilityMonitor()
     }
 
@@ -438,6 +437,9 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
 
         switch orchestrator.state {
         case .idle:
+            guard ensurePermissionsReadyForVoiceInput() else {
+                return
+            }
             do {
                 stopFloatingProcessingProgress(resetVisual: true)
                 captureTargetAppBeforeRecording()
@@ -3041,29 +3043,6 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func requestInitialPermissionsIfNeeded() {
-        if hasAllRequiredPermissions() {
-            markInitialPermissionPromptCompleted()
-            return
-        }
-
-        // Startup auto-prompt should run once only. After that, users can use
-        // "重新申请权限" for manual re-prompt to avoid repeated popups on every run.
-        let hasStablePromptedMarker = hasInitialPermissionPromptMarker()
-        let hasPrompted = settings.bool(
-            forKey: SettingsKeys.didRunInitialPermissionPrompt,
-            default: false
-        )
-        guard !hasStablePromptedMarker && !hasPrompted else { return }
-
-        markInitialPermissionPromptCompleted()
-        requestPermissionsFlow(
-            openSystemSettingsIfDenied: false,
-            promptAccessibility: true,
-            promptMicrophoneIfNeeded: true
-        )
-    }
-
     private func observeLocalASRAssetState() {
         NotificationCenter.default.addObserver(
             self,
@@ -3100,35 +3079,6 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         localASREngine.refreshConfiguration()
         localPreviewASREngine.refreshConfiguration()
         return applyModelFromSettings()
-    }
-
-    private func scheduleInitialLocalASRDownloadPromptIfNeeded() {
-        guard LocalASRAssetManager.shared.shouldPromptForInitialDownload() else { return }
-        let delaySeconds: TimeInterval = hasAllRequiredPermissions() ? 1.0 : 4.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds) { [weak self] in
-            self?.presentInitialLocalASRDownloadPromptIfNeeded()
-        }
-    }
-
-    private func presentInitialLocalASRDownloadPromptIfNeeded() {
-        guard LocalASRAssetManager.shared.shouldPromptForInitialDownload() else { return }
-
-        LocalASRAssetManager.shared.markInitialDownloadPromptHandled()
-
-        let alert = NSAlert()
-        alert.messageText = "要不要现在下载本地模型？"
-        alert.informativeText =
-            "下载完成后，MyType 就能直接使用本地识别和本地实时预览。首次准备会安装本地运行时，并下载 tiny + small 模型，通常需要几分钟；如果你暂时只想用云端，也可以稍后在设置里再下载。"
-        alert.addButton(withTitle: "立即下载")
-        alert.addButton(withTitle: "稍后再说")
-        alert.alertStyle = .informational
-
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        guard response == .alertFirstButtonReturn else { return }
-
-        showSettingsPanel(anchorToFloatingBall: false)
-        LocalASRAssetManager.shared.beginInstall()
     }
 
     private func prepareAudioCache() {
@@ -3193,6 +3143,20 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func ensurePermissionsReadyForVoiceInput() -> Bool {
+        guard !hasAllRequiredPermissions() else { return true }
+        requestPermissionsFlow(
+            openSystemSettingsIfDenied: false,
+            promptAccessibility: false,
+            promptMicrophoneIfNeeded: false
+        )
+        print(
+            "Voice input blocked until microphone and accessibility permissions are granted. " +
+                "Use the status bar menu '重新申请权限' if you need to reopen the system permission flow."
+        )
+        return false
+    }
+
     private func requestMicrophonePermission(
         openSystemSettingsIfDenied: Bool,
         promptIfNeeded: Bool
@@ -3233,6 +3197,29 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         let axTrusted = FocusedTextInjector.isAccessibilityTrusted(promptIfNeeded: false)
         let micAuthorized = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
         return axTrusted && micAuthorized
+    }
+
+    private func requestInitialPermissionsIfNeeded() {
+        if hasAllRequiredPermissions() {
+            markInitialPermissionPromptCompleted()
+            return
+        }
+
+        // Launch-time prompting should happen only once. After that, users can
+        // manually re-open the permission flow from the status menu when needed.
+        let hasStablePromptedMarker = hasInitialPermissionPromptMarker()
+        let hasPrompted = settings.bool(
+            forKey: SettingsKeys.didRunInitialPermissionPrompt,
+            default: false
+        )
+        guard !hasStablePromptedMarker && !hasPrompted else { return }
+
+        markInitialPermissionPromptCompleted()
+        requestPermissionsFlow(
+            openSystemSettingsIfDenied: false,
+            promptAccessibility: true,
+            promptMicrophoneIfNeeded: true
+        )
     }
 
     private func markInitialPermissionPromptCompleted() {
@@ -3655,6 +3642,7 @@ private func createSilentWarmupAudioFileURL(durationSeconds: Double = 0.35) -> U
 }
 
 let app = NSApplication.shared
+app.appearance = MyTypeAppearance.fixedLightMode
 let delegate = DemoAppDelegate()
 app.setActivationPolicy(.regular)
 app.delegate = delegate

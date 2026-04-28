@@ -35,6 +35,7 @@ public final class FloatingBallWindow {
             backing: .buffered,
             defer: false
         )
+        MyTypeAppearance.applyFixedLightAppearance(to: panel)
         button = FloatingBallButton(frame: NSRect(origin: .zero, size: Layout.panelSize))
 
         configurePanel()

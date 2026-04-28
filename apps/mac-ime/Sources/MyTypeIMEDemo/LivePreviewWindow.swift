@@ -1,4 +1,5 @@
 import AppKit
+import Common
 
 @MainActor
 final class LivePreviewWindow {
@@ -24,6 +25,7 @@ final class LivePreviewWindow {
             backing: .buffered,
             defer: false
         )
+        MyTypeAppearance.applyFixedLightAppearance(to: panel)
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false

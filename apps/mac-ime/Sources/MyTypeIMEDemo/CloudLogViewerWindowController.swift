@@ -1,4 +1,5 @@
 import AppKit
+import Common
 
 enum CloudLogRange: CaseIterable {
     case today
@@ -217,6 +218,7 @@ final class CloudLogViewerWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
+        MyTypeAppearance.applyFixedLightAppearance(to: panel)
         panel.title = "云端请求日志"
         panel.level = .floating
         panel.isFloatingPanel = true

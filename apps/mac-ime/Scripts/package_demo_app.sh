@@ -10,10 +10,13 @@ BUILD_CONFIGURATION="release"
 BUNDLE_ID="${MYTYPE_BUNDLE_ID:-com.mytype.demo}"
 APP_VERSION="${MYTYPE_APP_VERSION:-0.1.0}"
 APP_BUILD="${MYTYPE_APP_BUILD:-$(date +%Y%m%d%H%M)}"
-CODESIGN_IDENTITY="${MYTYPE_CODESIGN_IDENTITY:--}"
+CODESIGN_IDENTITY="${MYTYPE_CODESIGN_IDENTITY:-}"
+NOTARY_PROFILE="${MYTYPE_NOTARY_PROFILE:-}"
+NOTARY_TIMEOUT="${MYTYPE_NOTARY_TIMEOUT:-15m}"
 INCLUDE_MODELS=0
 SKIP_DMG=0
 SKIP_ZIP=0
+NOTARIZE=0
 
 cd "$PROJECT_DIR"
 
@@ -29,6 +32,8 @@ Options:
   --version <version>           Override CFBundleShortVersionString.
   --build-number <number>       Override CFBundleVersion.
   --codesign-identity <value>   Signing identity. Use "-" for ad-hoc signing.
+  --notarize                    Submit the signed artifact to Apple's notary service.
+  --notary-profile <name>       Keychain profile name saved with 'xcrun notarytool store-credentials'.
   --help                        Show this help.
 EOF
 }
@@ -61,6 +66,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codesign-identity)
       CODESIGN_IDENTITY="$2"
+      shift 2
+      ;;
+    --notarize)
+      NOTARIZE=1
+      shift
+      ;;
+    --notary-profile)
+      NOTARY_PROFILE="$2"
       shift 2
       ;;
     --help)
@@ -96,6 +109,54 @@ cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
+
+is_ad_hoc_identity() {
+  [[ "$CODESIGN_IDENTITY" == "-" ]]
+}
+
+is_developer_id_identity() {
+  [[ "$CODESIGN_IDENTITY" == Developer\ ID\ Application:* ]]
+}
+
+resolve_codesign_identity() {
+  if [[ -n "$CODESIGN_IDENTITY" ]]; then
+    return
+  fi
+
+  local matches=()
+  while IFS= read -r line; do
+    matches+=("$line")
+  done < <(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p')
+
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    CODESIGN_IDENTITY="${matches[0]}"
+    echo "[package] auto-selected Developer ID identity: $CODESIGN_IDENTITY"
+    return
+  fi
+
+  if [[ ${#matches[@]} -gt 1 ]]; then
+    echo "[package] multiple Developer ID Application identities found; pass --codesign-identity to choose one" >&2
+    exit 1
+  fi
+
+  CODESIGN_IDENTITY="-"
+  echo "[package] no Developer ID Application identity found; falling back to ad-hoc signing" >&2
+}
+
+validate_release_configuration() {
+  if [[ $NOTARIZE -eq 1 ]]; then
+    if ! is_developer_id_identity; then
+      echo "[package] notarization requires a Developer ID Application signing identity" >&2
+      exit 1
+    fi
+    if [[ -z "$NOTARY_PROFILE" ]]; then
+      echo "[package] notarization requested but no notary profile was provided" >&2
+      echo "[package] create one with:" >&2
+      echo "[package]   xcrun notarytool store-credentials <profile-name> --apple-id <apple-id> --team-id <team-id>" >&2
+      exit 1
+    fi
+  fi
+}
 
 generate_icns() {
   local source_png="$1"
@@ -220,7 +281,11 @@ prepare_bundle() {
 sign_bundle() {
   echo "[package] signing app bundle with identity: $CODESIGN_IDENTITY"
   xattr -cr "$APP_BUNDLE"
-  codesign --force --deep --sign "$CODESIGN_IDENTITY" "$APP_BUNDLE"
+  local sign_args=(--force --deep --sign "$CODESIGN_IDENTITY")
+  if is_developer_id_identity; then
+    sign_args+=(--options runtime --timestamp)
+  fi
+  codesign "${sign_args[@]}" "$APP_BUNDLE"
   codesign --verify --deep --strict "$APP_BUNDLE"
 }
 
@@ -244,11 +309,52 @@ create_dmg() {
   hdiutil create -volname "$PRODUCT_NAME" -srcfolder "$dmg_root" -ov -format UDZO "$DMG_PATH" >/dev/null
 }
 
+sign_dmg() {
+  [[ $SKIP_DMG -eq 1 ]] && return
+  is_developer_id_identity || return
+
+  echo "[package] signing dmg with identity: $CODESIGN_IDENTITY"
+  codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"
+  codesign --verify --strict "$DMG_PATH"
+}
+
+notarize_path() {
+  local target_path="$1"
+  echo "[package] notarizing $(basename "$target_path") with profile: $NOTARY_PROFILE"
+  xcrun notarytool submit "$target_path" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait \
+    --timeout "$NOTARY_TIMEOUT"
+}
+
+staple_path() {
+  local target_path="$1"
+  echo "[package] stapling $(basename "$target_path")"
+  xcrun stapler staple -v "$target_path"
+  xcrun stapler validate -v "$target_path"
+}
+
+notarize_release() {
+  [[ $NOTARIZE -eq 0 ]] && return
+
+  if [[ $SKIP_DMG -eq 0 ]]; then
+    notarize_path "$DMG_PATH"
+    staple_path "$DMG_PATH"
+  else
+    notarize_path "$APP_BUNDLE"
+    staple_path "$APP_BUNDLE"
+  fi
+}
+
+resolve_codesign_identity
+validate_release_configuration
 build_release_binary
 prepare_bundle
 sign_bundle
 create_zip
 create_dmg
+sign_dmg
+notarize_release
 
 echo "[package] done"
 echo "[package] app: $APP_BUNDLE"
@@ -256,3 +362,15 @@ echo "[package] app: $APP_BUNDLE"
 [[ $SKIP_DMG -eq 1 ]] || echo "[package] dmg: $DMG_PATH"
 [[ -f "$README_PATH" ]] && echo "[package] readme: $README_PATH"
 echo "[package] notes: $INSTALL_NOTES"
+if is_ad_hoc_identity; then
+  echo "[package] signing mode: ad-hoc"
+else
+  echo "[package] signing mode: $CODESIGN_IDENTITY"
+fi
+if [[ $NOTARIZE -eq 1 ]]; then
+  if [[ $SKIP_DMG -eq 0 ]]; then
+    echo "[package] notarized artifact: $DMG_PATH"
+  else
+    echo "[package] notarized artifact: $APP_BUNDLE"
+  fi
+fi
