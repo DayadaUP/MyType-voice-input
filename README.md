@@ -17,6 +17,13 @@ MyType 是一款 macOS 语音输入工具。
 - 个人样本、开发日志、阶段性工作记录
 - 设计源文件、截图素材与品牌资源
 
+## 下载
+
+- 直接下载 DMG：
+  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType/releases/download/v0.1.0/MyType-0.1.0.dmg)
+- Release 页面：
+  [GitHub Releases](https://github.com/DayadaUP/MyType/releases)
+
 ## 主要能力
 
 - 通过快捷键启动语音输入
@@ -91,6 +98,13 @@ The repository does not include:
 - local model files or virtual environments
 - personal notes, sample records, or development logs
 - design source files, screenshots, or branded assets
+
+### Download
+
+- Direct DMG download:
+  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType/releases/download/v0.1.0/MyType-0.1.0.dmg)
+- Releases page:
+  [GitHub Releases](https://github.com/DayadaUP/MyType/releases)
 
 ### Quick Start
 
