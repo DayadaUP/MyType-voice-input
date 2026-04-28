@@ -20,9 +20,9 @@ MyType 是一款 macOS 语音输入工具。
 ## 下载
 
 - 直接下载 DMG：
-  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType-/releases/download/v0.1.0/MyType-0.1.0.dmg)
+  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType-voice-input/releases/download/v0.1.0/MyType-0.1.0.dmg)
 - Release 页面：
-  [GitHub Releases](https://github.com/DayadaUP/MyType-/releases)
+  [GitHub Releases](https://github.com/DayadaUP/MyType-voice-input/releases)
 
 ## 主要能力
 
@@ -102,9 +102,9 @@ The repository does not include:
 ### Download
 
 - Direct DMG download:
-  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType-/releases/download/v0.1.0/MyType-0.1.0.dmg)
+  [MyType-0.1.0.dmg](https://github.com/DayadaUP/MyType-voice-input/releases/download/v0.1.0/MyType-0.1.0.dmg)
 - Releases page:
-  [GitHub Releases](https://github.com/DayadaUP/MyType-/releases)
+  [GitHub Releases](https://github.com/DayadaUP/MyType-voice-input/releases)
 
 ### Quick Start
 
