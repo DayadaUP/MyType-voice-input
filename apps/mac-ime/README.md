@@ -1,33 +1,33 @@
-# MyType macOS App
+# MyType macOS 应用说明
 
-This directory contains the current macOS application implementation for MyType.
+这个目录包含 MyType 当前的 macOS 应用实现。
 
-## Overview
+## 功能概览
 
-The app currently focuses on practical desktop voice input with:
+当前版本主要围绕桌面语音输入体验展开，包含：
 
-- shortcut-driven recording
-- local, cloud, and hybrid recognition modes
-- live preview before final insertion
-- personal lexicon learning and filler-word filtering
-- history, usage stats, and local model management
+- 通过快捷键开始录音
+- 本地识别、云端识别与混合识别模式
+- 实时预览与最终文本插入
+- 个人词库学习与语气词过滤
+- 历史记录、使用统计与本地模型管理
 
-## Basic Usage
+## 基本使用
 
-1. Keep MyType running.
-2. Put the cursor in an editable text field.
-3. Press the configured shortcut and start speaking.
-4. When recording ends, MyType transcribes the speech and inserts text into the focused input area.
+1. 保持 MyType 处于运行状态。
+2. 将光标放到可输入文本的位置。
+3. 按下你设置好的语音输入快捷键并开始说话。
+4. 录音结束后，MyType 会将识别结果写入当前焦点输入区域。
 
-## Permissions
+## 权限说明
 
-The app usually requires:
+应用通常需要以下系统权限：
 
-- Microphone permission for recording
-- Accessibility permission for inserting text into other apps
+- 麦克风权限：用于录音
+- 辅助功能权限：用于把文字写入其他应用
 
-## Recognition Modes
+## 识别模式
 
-- Local mode runs on-device. Responsiveness depends on Mac performance, current system load, and selected model size.
-- Cloud mode requires the user to configure their own API credentials.
-- The current cloud path has mainly been validated against Doubao-style streaming speech endpoints.
+- 本地模式：识别在设备本机执行，速度与响应时延会受电脑性能、系统负载和模型大小影响。
+- 云端模式：需要用户在设置页中自行配置 API。
+- 当前云端链路：目前主要以豆包风格的流式语音接口完成测试与适配。

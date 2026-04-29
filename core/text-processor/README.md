@@ -1,4 +1,14 @@
-# core/text-processor
+# 文本后处理说明
 
-Reserved for cross-platform text post-processing engine.
-Current macOS scaffold lives in `apps/mac-ime/Sources/TextProcessor`.
+这个目录预留给未来可能独立出来的跨平台文本后处理模块。
+
+当前公开版本里，主要的 macOS 文本处理实现位于：
+
+- `apps/mac-ime/Sources/TextProcessor`
+
+这一层主要负责：
+
+- 识别结果清洗
+- 标点补全与格式整理
+- 数字、日期、时间等内容修正
+- 最终输出前的文本润色

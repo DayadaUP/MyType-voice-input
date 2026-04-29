@@ -1,4 +1,13 @@
-# core/asr
+# ASR 说明
 
-Reserved for shared ASR adapters if we split macOS and Windows runtime later.
-Current macOS scaffold lives in `apps/mac-ime/Sources/ASRAdapter`.
+这个目录预留给未来可能拆分出的跨平台识别适配层。
+
+当前公开版本里，主要的 macOS 识别实现位于：
+
+- `apps/mac-ime/Sources/ASRAdapter`
+
+这一层负责：
+
+- 本地识别调用
+- 云端识别接口适配
+- 混合模式下的识别流程编排

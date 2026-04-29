@@ -1,4 +1,14 @@
-# core/lexicon
+# 词库说明
 
-Reserved for shared lexicon data services.
-Current macOS scaffold lives in `apps/mac-ime/Sources/Lexicon`.
+这个目录预留给未来可能抽离出来的跨平台词库能力。
+
+当前公开版本里，主要的 macOS 词库实现位于：
+
+- `apps/mac-ime/Sources/Lexicon`
+
+这一层主要负责：
+
+- 个人词库管理
+- 用户纠错学习
+- 词条持久化存储
+- 个性化替换与修正能力
