@@ -35,23 +35,6 @@ MyType 是一款 macOS 语音输入工具。
 - 支持 API 自定义配置与连通性测试
 - 支持本地模型下载、部署与删除
 
-## 快速开始
-
-```bash
-cd apps/mac-ime
-swift build
-swift run MyTypeIMEDemo
-```
-
-## 打包
-
-```bash
-cd apps/mac-ime
-bash Scripts/package_demo_app.sh
-```
-
-默认打包产物会输出到 `apps/mac-ime/dist/`。
-
 ## 仓库结构
 
 - `apps/mac-ime`
@@ -109,21 +92,6 @@ The repository does not include:
   [GitHub Releases](https://github.com/DayadaUP/MyType-voice-input/releases)
 - API setup guide:
   [MyType API Setup Guide](docs/MyType语音输入法-API设置教程.md)
-
-### Quick Start
-
-```bash
-cd apps/mac-ime
-swift build
-swift run MyTypeIMEDemo
-```
-
-### Packaging
-
-```bash
-cd apps/mac-ime
-bash Scripts/package_demo_app.sh
-```
 
 ### Docs
 
