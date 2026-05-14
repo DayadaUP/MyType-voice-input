@@ -24,6 +24,8 @@ MyType 是一款 macOS 语音输入工具。
 
 解压后将 `MyType.app` 拖入「应用程序」文件夹即可。
 
+如果通过 DMG 安装时遇到问题，可以直接下载项目源码，使用 Xcode 打开 `apps/mac-ime/Package.swift`，或在 `apps/mac-ime` 目录执行 `swift run MyTypeIMEDemo` 启动。确认能够正常运行后，也可以自行重新封装 DMG 安装包再安装。
+
 ## 主要能力
 
 - 通过快捷键启动语音输入
@@ -88,6 +90,8 @@ The repository does not include:
 - All releases: [GitHub Releases](https://github.com/DayadaUP/MyType-voice-input/releases)
 
 Unzip and drag `MyType.app` into your `Applications` folder.
+
+If DMG installation fails, you can download the project source directly, open `apps/mac-ime/Package.swift` in Xcode, or run `swift run MyTypeIMEDemo` inside `apps/mac-ime`. Once the app runs normally, you can also repackage a DMG locally and install from that build.
 
 ### Docs
 
