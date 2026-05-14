@@ -6,3 +6,17 @@ apps/mac-ime/dist/
 apps/mac-ime/.swiftpm/xcode/package.xcworkspace/xcuserdata/
 apps/mac-ime/.swiftpm/xcode/xcuserdata/
 *.xcappdata/
+
+# Local-only design materials and screenshots
+/1.jpg
+/ChatGPT Image 2026年4月18日 14_20_30.png
+/app logo new.png
+/app截图/
+/ig_0cc4b60ebb3923de0169ee376579f08191b8392c491b0ddbea.png
+/ig_0cc4b60ebb3923de0169ee37eb16848191a3e3bc5b94887e7d.png
+/ig_0cc4b60ebb3923de0169ee394520988191927aa3c2443d2a14.png
+/mytype app logov2.psd
+
+# Removed public tutorial assets that should stay out of the software repo
+/docs/MyType语音输入法-API设置教程.md
+/docs/assets/MyType语音输入法-API设置教程/

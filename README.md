@@ -24,10 +24,6 @@ MyType 是一款 macOS 语音输入工具。
 
 解压后将 `MyType.app` 拖入「应用程序」文件夹即可。
 
-## 相关文档
-- API 设置教程：
-  [MyType语音输入法-API设置教程](docs/MyType语音输入法-API设置教程.md)
-
 ## 主要能力
 
 - 通过快捷键启动语音输入
@@ -92,10 +88,6 @@ The repository does not include:
 - All releases: [GitHub Releases](https://github.com/DayadaUP/MyType-voice-input/releases)
 
 Unzip and drag `MyType.app` into your `Applications` folder.
-
-### Reference
-- API setup guide:
-  [MyType API Setup Guide](docs/MyType语音输入法-API设置教程.md)
 
 ### Docs
 

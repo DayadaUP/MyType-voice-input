@@ -31,6 +31,7 @@ final class LocalASRAssetManager {
 
     enum AssetError: LocalizedError {
         case busy
+        case cancelled
         case unsupported(String)
         case scriptMissing(URL)
         case commandFailed(step: String, command: String, details: String)
@@ -40,6 +41,8 @@ final class LocalASRAssetManager {
             switch self {
             case .busy:
                 return "本地模型任务正在进行中。"
+            case .cancelled:
+                return "本地模型安装已取消。"
             case .unsupported(let message):
                 return message
             case .scriptMissing(let url):
@@ -70,6 +73,7 @@ final class LocalASRAssetManager {
     private var activeOperationID: UUID?
     private var activeStepTitle: String?
     private var lastFailureMessage: String?
+    private var pendingCompletion: ((Result<Snapshot, AssetError>) -> Void)?
     private(set) var snapshot = Snapshot(
         kind: .notInstalled,
         source: nil,
@@ -111,7 +115,17 @@ final class LocalASRAssetManager {
         }
     }
 
-    func beginInstall(completion: ((Result<Snapshot, AssetError>) -> Void)? = nil) {
+    func cancelActiveInstall() {
+        guard activeOperationID != nil else { return }
+        activeOperationID = nil
+        activeStepTitle = nil
+        let completion = pendingCompletion
+        pendingCompletion = nil
+        refreshStatus()
+        completion?(.failure(.cancelled))
+    }
+
+    func beginInstall(pack: LocalModelPack? = nil, completion: ((Result<Snapshot, AssetError>) -> Void)? = nil) {
         guard activeOperationID == nil else {
             completion?(.failure(.busy))
             return
@@ -120,18 +134,21 @@ final class LocalASRAssetManager {
         lastFailureMessage = nil
         let operationID = UUID()
         activeOperationID = operationID
+        pendingCompletion = completion
         setActiveStep("正在准备本地识别环境…")
 
+        let requestedModels = pack?.requestedModels ?? ASRModelSize.allCases
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
 
             do {
-                try self.installAssets(operationID: operationID)
+                try self.installAssets(operationID: operationID, models: requestedModels)
                 DispatchQueue.main.async {
                     guard self.activeOperationID == operationID else { return }
                     self.activeOperationID = nil
                     self.activeStepTitle = nil
                     self.lastFailureMessage = nil
+                    self.pendingCompletion = nil
                     self.refreshStatus()
                     completion?(.success(self.snapshot))
                 }
@@ -140,6 +157,7 @@ final class LocalASRAssetManager {
                     guard self.activeOperationID == operationID else { return }
                     self.activeOperationID = nil
                     self.activeStepTitle = nil
+                    self.pendingCompletion = nil
                     self.lastFailureMessage = self.userFacingMessage(for: error)
                     self.refreshStatus()
                     completion?(.failure(error))
@@ -150,6 +168,7 @@ final class LocalASRAssetManager {
                     guard self.activeOperationID == operationID else { return }
                     self.activeOperationID = nil
                     self.activeStepTitle = nil
+                    self.pendingCompletion = nil
                     self.lastFailureMessage = self.userFacingMessage(for: wrapped)
                     self.refreshStatus()
                     completion?(.failure(wrapped))
@@ -201,7 +220,7 @@ final class LocalASRAssetManager {
         }
     }
 
-    private func installAssets(operationID: UUID) throws {
+    private func installAssets(operationID: UUID, models: [ASRModelSize] = ASRModelSize.allCases) throws {
         guard let rootURL = userManagedRootURL() else {
             throw AssetError.unsupported("无法定位“应用程序支持”目录，暂时不能下载本地模型。")
         }
@@ -261,7 +280,7 @@ final class LocalASRAssetManager {
         let probeAudioURL = try createProbeAudioFile()
         defer { try? fileManager.removeItem(at: probeAudioURL) }
 
-        for model in ASRModelSize.allCases {
+        for model in models {
             reportInstallStep("正在下载 \(model.rawValue) 模型…", operationID: operationID)
             try runCommand(
                 executablePath: venvPython.path,
@@ -641,6 +660,8 @@ final class LocalASRAssetManager {
         switch error {
         case .busy:
             return "已经有一个本地模型任务在执行了，等它完成后再试一次。"
+        case .cancelled:
+            return "本地模型安装已取消。"
         case .unsupported(let message):
             return message
         case .scriptMissing:

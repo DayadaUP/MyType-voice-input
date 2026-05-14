@@ -198,6 +198,7 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
 
     private struct PermissionSnapshot: Equatable {
         let accessibilityTrusted: Bool
+        let listenEventTrusted: Bool
         let microphoneStatus: AVAuthorizationStatus
     }
 
@@ -671,6 +672,10 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         }
         manager.start()
         globalShortcutManager = manager
+
+        if !CGPreflightListenEventAccess() {
+            print("Warning: Input monitoring permission not granted. Global shortcut will not work in other apps.")
+        }
     }
 
     private func reloadGlobalShortcuts() {
@@ -2974,6 +2979,14 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         if previous.accessibilityTrusted != snapshot.accessibilityTrusted {
             print("Permission change: accessibility=\(snapshot.accessibilityTrusted ? "granted" : "not-granted")")
         }
+        if previous.listenEventTrusted != snapshot.listenEventTrusted {
+            print("Permission change: input-monitoring=\(snapshot.listenEventTrusted ? "granted" : "not-granted")")
+            if snapshot.listenEventTrusted, !previous.listenEventTrusted {
+                globalShortcutManager?.stop()
+                globalShortcutManager?.start()
+                print("Global shortcut monitor restarted after input monitoring permission granted.")
+            }
+        }
         if previous.microphoneStatus != snapshot.microphoneStatus {
             print("Permission change: microphone=\(microphoneStatusDescription(snapshot.microphoneStatus))")
         }
@@ -3024,6 +3037,7 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
     private func currentPermissionSnapshot() -> PermissionSnapshot {
         PermissionSnapshot(
             accessibilityTrusted: FocusedTextInjector.isAccessibilityTrusted(promptIfNeeded: false),
+            listenEventTrusted: CGPreflightListenEventAccess(),
             microphoneStatus: AVCaptureDevice.authorizationStatus(for: .audio)
         )
     }
@@ -3119,6 +3133,7 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
     private func requestPermissionsFlow(
         openSystemSettingsIfDenied: Bool,
         promptAccessibility: Bool = true,
+        promptInputMonitoring: Bool = true,
         promptMicrophoneIfNeeded: Bool = true
     ) {
         let axTrusted = FocusedTextInjector.isAccessibilityTrusted(promptIfNeeded: promptAccessibility)
@@ -3135,6 +3150,21 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        let listenTrusted = CGPreflightListenEventAccess()
+        if listenTrusted {
+            print("Input monitoring permission already granted.")
+        } else {
+            if promptInputMonitoring {
+                CGRequestListenEventAccess()
+                print("Requested input monitoring permission. Please allow MyType in System Settings.")
+            } else {
+                print("Input monitoring permission not granted yet.")
+            }
+            if openSystemSettingsIfDenied {
+                openSystemSettings(urlString: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
+            }
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             self.requestMicrophonePermission(
                 openSystemSettingsIfDenied: openSystemSettingsIfDenied,
@@ -3148,10 +3178,11 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
         requestPermissionsFlow(
             openSystemSettingsIfDenied: false,
             promptAccessibility: false,
+            promptInputMonitoring: false,
             promptMicrophoneIfNeeded: false
         )
         print(
-            "Voice input blocked until microphone and accessibility permissions are granted. " +
+            "Voice input blocked until microphone, accessibility and input monitoring permissions are granted. " +
                 "Use the status bar menu '重新申请权限' if you need to reopen the system permission flow."
         )
         return false
@@ -3195,8 +3226,9 @@ final class DemoAppDelegate: NSObject, NSApplicationDelegate {
 
     private func hasAllRequiredPermissions() -> Bool {
         let axTrusted = FocusedTextInjector.isAccessibilityTrusted(promptIfNeeded: false)
+        let listenTrusted = CGPreflightListenEventAccess()
         let micAuthorized = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
-        return axTrusted && micAuthorized
+        return axTrusted && listenTrusted && micAuthorized
     }
 
     private func requestInitialPermissionsIfNeeded() {

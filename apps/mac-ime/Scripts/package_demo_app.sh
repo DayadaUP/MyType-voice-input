@@ -97,7 +97,7 @@ RESOURCES_DIR="$CONTENTS_DIR/Resources"
 ASR_DIR="$RESOURCES_DIR/ASR"
 APP_ICON_SOURCE="$PROJECT_DIR/Sources/MyTypeIMEDemo/Resources/AppLogo.png"
 ASR_SCRIPT_SOURCE="$PROJECT_DIR/Scripts/faster_whisper_transcribe.py"
-README_SOURCE="$PROJECT_DIR/Distribution/README.md"
+README_SOURCE="$PROJECT_DIR/../../README.md"
 README_PATH="$DIST_DIR/README.md"
 INSTALL_NOTES="$DIST_DIR/${PRODUCT_NAME} Install Notes.txt"
 LEGACY_INSTALL_NOTES="$DIST_DIR/Install MyType Demo.txt"
@@ -253,7 +253,7 @@ build_release_binary() {
 
 prepare_bundle() {
   echo "[package] preparing app bundle"
-  rm -rf "$APP_BUNDLE" "$ZIP_PATH" "$DMG_PATH" "$LEGACY_INSTALL_NOTES"
+  rm -rf "$APP_BUNDLE" "$ZIP_PATH" "$DMG_PATH" "$LEGACY_INSTALL_NOTES" "$README_PATH"
   mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$ASR_DIR" "$DIST_DIR"
 
   cp "$BIN_DIR/$APP_EXECUTABLE" "$MACOS_DIR/$APP_EXECUTABLE"
