@@ -62,7 +62,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "MyTypeIMEDemo",
-            dependencies: ["IMEHost", "TextProcessor", "Lexicon", "Settings"],
+            dependencies: ["IMEHost", "TextProcessor", "Lexicon", "Settings", "Common"],
             resources: [
                 .process("Resources")
             ],
@@ -77,7 +77,7 @@ let package = Package(
         ),
         .testTarget(
             name: "TextProcessorTests",
-            dependencies: ["TextProcessor", "Lexicon", "Settings", "ASRAdapter", "IMEHost"]
+            dependencies: ["TextProcessor", "Lexicon", "Settings", "ASRAdapter", "IMEHost", "Common"]
         )
     ]
 )
